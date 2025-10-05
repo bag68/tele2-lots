@@ -1,6 +1,6 @@
 def create_web_app_html():
     """Создание HTML для Web App"""
-    return f"""
+    html_content = """
     <!DOCTYPE html>
     <html lang="ru">
     <head>
@@ -9,88 +9,249 @@ def create_web_app_html():
         <title>Мониторинг лотов Tele2</title>
         <script src="https://telegram.org/js/telegram-web-app.js"></script>
         <style>
-            body {{
+            body {
                 font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
                 margin: 0;
                 padding: 20px;
                 background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
                 min-height: 100vh;
-            }}
-            .container {{
+            }
+            .container {
                 max-width: 100%;
                 margin: 0 auto;
-            }}
-            /* ... остальные стили ... */
+            }
+            .header {
+                text-align: center;
+                color: white;
+                margin-bottom: 20px;
+            }
+            .tabs {
+                display: flex;
+                margin-bottom: 20px;
+                background: white;
+                border-radius: 10px;
+                overflow: hidden;
+            }
+            .tab {
+                flex: 1;
+                padding: 15px;
+                text-align: center;
+                cursor: pointer;
+                border: none;
+                background: transparent;
+                font-weight: bold;
+            }
+            .tab.active {
+                background: #667eea;
+                color: white;
+            }
+            .content {
+                background: white;
+                border-radius: 15px;
+                padding: 20px;
+                box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            }
+            .stats {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 10px;
+                margin-bottom: 20px;
+            }
+            .stat-card {
+                background: #f8f9fa;
+                padding: 15px;
+                border-radius: 10px;
+                text-align: center;
+            }
+            .stat-value {
+                font-size: 24px;
+                font-weight: bold;
+                color: #667eea;
+            }
+            .stat-label {
+                font-size: 12px;
+                color: #666;
+            }
+            .table-container {
+                overflow-x: auto;
+            }
+            .table {
+                width: 100%;
+                border-collapse: collapse;
+                margin-top: 15px;
+                min-width: 600px;
+            }
+            .table th {
+                background: #667eea;
+                color: white;
+                padding: 12px;
+                text-align: left;
+                position: sticky;
+                top: 0;
+            }
+            .table td {
+                padding: 12px;
+                border-bottom: 1px solid #eee;
+            }
+            .table tr:hover {
+                background: #f5f5f5;
+            }
+            .status-active {
+                color: #28a745;
+                font-weight: bold;
+            }
+            .status-bought {
+                color: #dc3545;
+                font-weight: bold;
+            }
+            .empty-state {
+                text-align: center;
+                padding: 40px;
+                color: #666;
+            }
+            .last-update {
+                text-align: center;
+                color: white;
+                margin-top: 20px;
+                font-size: 12px;
+            }
+            .loading {
+                text-align: center;
+                padding: 20px;
+                color: #666;
+            }
+            .refresh-btn {
+                background: #667eea;
+                color: white;
+                border: none;
+                padding: 10px 20px;
+                border-radius: 5px;
+                cursor: pointer;
+                margin: 10px 0;
+            }
         </style>
     </head>
     <body>
         <div class="container">
-            <!-- ... HTML структура ... -->
+            <div class="header">
+                <h1>📊 Мониторинг лотов Tele2</h1>
+                <button class="refresh-btn" onclick="loadData()">🔄 Обновить</button>
+            </div>
+            
+            <div class="tabs">
+                <button class="tab active" onclick="showTab('active')">Активные</button>
+                <button class="tab" onclick="showTab('bought')">Купленные</button>
+                <button class="tab" onclick="showTab('stats')">Статистика</button>
+            </div>
+            
+            <div class="content">
+                <div id="active-tab" class="tab-content">
+                    <h3>🟢 Активные лоты</h3>
+                    <div id="active-table-container" class="loading">
+                        Загрузка данных...
+                    </div>
+                </div>
+                
+                <div id="bought-tab" class="tab-content" style="display: none;">
+                    <h3>🔴 Купленные лоты</h3>
+                    <div id="bought-table-container" class="loading">
+                        Загрузка данных...
+                    </div>
+                </div>
+                
+                <div id="stats-tab" class="tab-content" style="display: none;">
+                    <h3>📈 Статистика</h3>
+                    <div class="stats">
+                        <div class="stat-card">
+                            <div class="stat-value" id="active-count">0</div>
+                            <div class="stat-label">Активных лотов</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value" id="active-sum">0 руб</div>
+                            <div class="stat-label">Сумма активных</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value" id="bought-count">0</div>
+                            <div class="stat-label">Купленных лотов</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value" id="bought-sum">0 руб</div>
+                            <div class="stat-label">Сумма купленных</div>
+                        </div>
+                    </div>
+                    <div class="stat-card" style="grid-column: 1 / -1; margin-top: 10px;">
+                        <div class="stat-value" id="total-sum">0 руб</div>
+                        <div class="stat-label">Общая сумма всех лотов</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="last-update">
+                Обновлено: <span id="update-time">-</span>
+            </div>
         </div>
 
         <script>
             let appData = null;
-
-            function showTab(tabName) {{
+            
+            function showTab(tabName) {
                 // Скрыть все вкладки
-                document.querySelectorAll('.tab-content').forEach(tab => {{
+                document.querySelectorAll('.tab-content').forEach(tab => {
                     tab.style.display = 'none';
-                }});
-
+                });
+                
                 // Убрать активный класс со всех кнопок
-                document.querySelectorAll('.tab').forEach(tab => {{
+                document.querySelectorAll('.tab').forEach(tab => {
                     tab.classList.remove('active');
-                }});
-
+                });
+                
                 // Показать выбранную вкладку
                 document.getElementById(tabName + '-tab').style.display = 'block';
-
+                
                 // Добавить активный класс к выбранной кнопке
                 event.target.classList.add('active');
-
-                // Если данные еще не загружены, загрузить их
-                if (!appData) {{
-                    loadData();
-                }}
-            }}
-
-            function loadData() {{
-                // В реальном приложении здесь будет запрос к API
-                setTimeout(() => {{
-                    if (appData) {{
-                        renderData(appData);
-                    }}
-                }}, 500);
-            }}
-
-            function renderData(data) {{
-                // Обновляем статистику
-                document.getElementById('active-count').textContent = data.stats.active_count;
-                document.getElementById('active-sum').textContent = data.stats.active_sum + ' руб';
-                document.getElementById('bought-count').textContent = data.stats.bought_count;
-                document.getElementById('bought-sum').textContent = data.stats.bought_sum + ' руб';
-
-                // Рендерим таблицу активных лотов
-                renderTable('active-table-container', data.active_lots);
-
-                // Рендерим таблицу купленных лотов
-                renderTable('bought-table-container', data.bought_lots);
-
-                // Обновляем время
-                document.getElementById('update-time').textContent = new Date().toLocaleString('ru-RU');
-            }}
-
-            function renderTable(containerId, lots) {{
+                
+                // Если данные загружены, обновить отображение
+                if (appData) {
+                    renderTabData(tabName);
+                }
+            }
+            
+            function renderTabData(tabName) {
+                switch(tabName) {
+                    case 'active':
+                        renderTable('active-table-container', appData.active_lots);
+                        break;
+                    case 'bought':
+                        renderTable('bought-table-container', appData.bought_lots);
+                        break;
+                    case 'stats':
+                        updateStats();
+                        break;
+                }
+            }
+            
+            function updateStats() {
+                if (!appData) return;
+                
+                document.getElementById('active-count').textContent = appData.stats.active_count;
+                document.getElementById('active-sum').textContent = appData.stats.active_sum + ' руб';
+                document.getElementById('bought-count').textContent = appData.stats.bought_count;
+                document.getElementById('bought-sum').textContent = appData.stats.bought_sum + ' руб';
+                document.getElementById('total-sum').textContent = (appData.stats.active_sum + appData.stats.bought_sum) + ' руб';
+            }
+            
+            function renderTable(containerId, lots) {
                 const container = document.getElementById(containerId);
-
-                if (!lots || lots.length === 0) {{
+                
+                if (!lots || lots.length === 0) {
                     container.innerHTML = '<div class="empty-state">Нет данных для отображения</div>';
                     return;
-                }}
-
-                let html = '<table class="table"><tr><th>ID</th><th>Статус</th><th>Номинал</th><th>Цена</th><th>Сгорание</th><th>Продавец</th></tr>';
-
-                lots.forEach(lot => {{
+                }
+                
+                let html = '<div class="table-container"><table class="table"><tr><th>ID</th><th>Статус</th><th>Номинал</th><th>Цена</th><th>Сгорание</th><th>Изменен</th><th>Продавец</th></tr>';
+                
+                lots.forEach(lot => {
                     const statusClass = lot.original_status === 'active' ? 'status-active' : 'status-bought';
                     html += `
                         <tr>
@@ -99,31 +260,87 @@ def create_web_app_html():
                             <td>${lot.nominal}</td>
                             <td>${lot.price}</td>
                             <td>${lot.expiration}</td>
+                            <td>${lot.changed}</td>
                             <td>${lot.name}</td>
                         </tr>
                     `;
-                }});
-
-                html += '</table>';
+                });
+                
+                html += '</table></div>';
                 container.innerHTML = html;
-            }}
-
+            }
+            
+            function loadData() {
+                // В реальном приложении здесь будет запрос к API бота
+                // Для демо используем localStorage или mock данные
+                
+                const savedData = localStorage.getItem('tele2_lots_data');
+                if (savedData) {
+                    appData = JSON.parse(savedData);
+                    renderTabData('active');
+                    updateStats();
+                    document.getElementById('update-time').textContent = new Date().toLocaleString('ru-RU');
+                } else {
+                    // Mock данные для демонстрации
+                    appData = {
+                        active_lots: [
+                            {
+                                id: "891856",
+                                status: "Активный",
+                                nominal: "200 min",
+                                price: "400 руб",
+                                expiration: "13.03.2025",
+                                changed: "11.03.2025",
+                                name: "Светлана",
+                                original_status: "active"
+                            },
+                            {
+                                id: "894413",
+                                status: "Активный", 
+                                nominal: "1 gb",
+                                price: "50 руб",
+                                expiration: "13.03.2025",
+                                changed: "11.03.2025",
+                                name: "Светлана",
+                                original_status: "active"
+                            }
+                        ],
+                        bought_lots: [
+                            {
+                                id: "74892",
+                                status: "Куплен",
+                                nominal: "200 min", 
+                                price: "400 руб",
+                                expiration: "15.03.2025",
+                                changed: "15.03.2025",
+                                name: "Светлана",
+                                original_status: "bought"
+                            }
+                        ],
+                        stats: {
+                            active_count: 2,
+                            active_sum: 450,
+                            bought_count: 1,
+                            bought_sum: 400
+                        }
+                    };
+                    
+                    renderTabData('active');
+                    updateStats();
+                    document.getElementById('update-time').textContent = new Date().toLocaleString('ru-RU');
+                }
+            }
+            
             // Инициализация при загрузке
-            document.addEventListener('DOMContentLoaded', function() {{
+            document.addEventListener('DOMContentLoaded', function() {
                 Telegram.WebApp.ready();
-
-                // Получаем данные из initData
-                const initData = Telegram.WebApp.initData;
-                if (initData) {{
-                    try {{
-                        appData = {json.dumps(generate_web_app_data(), ensure_ascii=False)};
-                        renderData(appData);
-                    }} catch (e) {{
-                        console.error('Error parsing data:', e);
-                    }}
-                }}
-            }});
+                Telegram.WebApp.expand();
+                
+                // Загружаем данные
+                loadData();
+            });
         </script>
     </body>
     </html>
     """
+    return html_content
