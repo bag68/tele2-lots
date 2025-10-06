@@ -1,699 +1,692 @@
 <!DOCTYPE html>
-    <html lang="ru">
-    <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Мониторинг лотов Tele2</title>
-        <script src="https://telegram.org/js/telegram-web-app.js"></script>
-        <style>
-            * {
-                box-sizing: border-box;
-                margin: 0;
-                padding: 0;
-            }
-            body {
-                font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-                background: #f5f6fa;
-                color: #333;
-                line-height: 1.4;
-            }
-            .app-container {
-                max-width: 100%;
-                padding: 12px;
-            }
-            .header {
-                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-                color: white;
-                padding: 15px;
-                border-radius: 12px;
-                margin-bottom: 15px;
-                text-align: center;
-                box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
-            }
-            .header h1 {
-                font-size: 18px;
-                margin-bottom: 8px;
-                font-weight: 600;
-            }
-            .controls {
-                display: flex;
-                gap: 8px;
-                justify-content: center;
-                margin-top: 10px;
-            }
-            .btn {
-                background: rgba(255, 255, 255, 0.2);
-                border: 1px solid rgba(255, 255, 255, 0.3);
-                color: white;
-                padding: 6px 12px;
-                border-radius: 20px;
-                cursor: pointer;
-                font-size: 12px;
-                backdrop-filter: blur(10px);
-            }
-            .tabs {
-                display: flex;
-                background: white;
-                border-radius: 12px;
-                padding: 4px;
-                margin-bottom: 15px;
-                box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-            }
-            .tab {
-                flex: 1;
-                padding: 10px;
-                text-align: center;
-                cursor: pointer;
-                border: none;
-                background: transparent;
-                font-weight: 500;
-                font-size: 13px;
-                border-radius: 8px;
-                transition: all 0.3s ease;
-            }
-            .tab.active {
-                background: #667eea;
-                color: white;
-                box-shadow: 0 2px 6px rgba(102, 126, 234, 0.3);
-            }
-            .content {
-                background: white;
-                border-radius: 12px;
-                padding: 15px;
-                margin-bottom: 15px;
-                box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-            }
-            .tab-content {
-                display: none;
-            }
-            .tab-content.active {
-                display: block;
-            }
-            .section-title {
-                font-size: 14px;
-                font-weight: 600;
-                margin-bottom: 12px;
-                color: #2c3e50;
-                display: flex;
-                align-items: center;
-                gap: 6px;
-            }
-            .table-container {
-                overflow-x: auto;
-                margin: 0 -15px;
-                padding: 0 15px;
-            }
-            .table {
-                width: 100%;
-                border-collapse: collapse;
-                font-size: 12px;
-                min-width: 700px;
-            }
-            .table th {
-                background: #f8f9fa;
-                color: #667eea;
-                padding: 10px 6px;
-                text-align: left;
-                font-weight: 600;
-                border-bottom: 2px solid #e9ecef;
-                white-space: nowrap;
-            }
-            .table td {
-                padding: 8px 6px;
-                border-bottom: 1px solid #e9ecef;
-                white-space: nowrap;
-            }
-            .table tr:last-child td {
-                border-bottom: none;
-            }
-            .table tr:hover {
-                background: #f8f9fa;
-            }
-            .status-active {
-                color: #27ae60;
-                font-weight: 600;
-                font-size: 11px;
-            }
-            .status-bought {
-                color: #e74c3c;
-                font-weight: 600;
-                font-size: 11px;
-            }
-            .id-copy {
-                color: #667eea;
-                cursor: pointer;
-                font-weight: 600;
-                padding: 2px 4px;
-                border-radius: 4px;
-                transition: background 0.2s;
-            }
-            .id-copy:hover {
-                background: #f0f3ff;
-            }
-            .stats-grid {
-                display: grid;
-                grid-template-columns: 1fr 1fr;
-                gap: 10px;
-                margin-bottom: 15px;
-            }
-            .stat-card {
-                background: #f8f9fa;
-                padding: 12px;
-                border-radius: 8px;
-                text-align: center;
-                border-left: 4px solid #667eea;
-            }
-            .stat-value {
-                font-size: 16px;
-                font-weight: 700;
-                color: #2c3e50;
-                margin-bottom: 2px;
-            }
-            .stat-label {
-                font-size: 11px;
-                color: #7f8c8d;
-            }
-            .profit-section {
-                background: linear-gradient(135deg, #e8f5e8, #d4edda);
-                padding: 15px;
-                border-radius: 8px;
-                margin-top: 15px;
-                border: 1px solid #c3e6cb;
-            }
-            .profit-title {
-                font-size: 13px;
-                font-weight: 600;
-                color: #155724;
-                margin-bottom: 8px;
-                text-align: center;
-            }
-            .profit-value {
-                font-size: 20px;
-                font-weight: 700;
-                color: #155724;
-                text-align: center;
-                margin: 8px 0;
-            }
-            .profit-formula {
-                font-size: 11px;
-                color: #155724;
-                text-align: center;
-                opacity: 0.8;
-            }
-            .redemption-input-section {
-                background: #fff3cd;
-                padding: 12px;
-                border-radius: 8px;
-                margin: 15px 0;
-                border: 1px solid #ffeaa7;
-            }
-            .input-group {
-                display: flex;
-                gap: 8px;
-                align-items: center;
-            }
-            .redemption-input {
-                flex: 1;
-                padding: 8px 12px;
-                border: 1px solid #ddd;
-                border-radius: 6px;
-                font-size: 14px;
-                background: white;
-            }
-            .save-btn {
-                background: #667eea;
-                color: white;
-                border: none;
-                padding: 8px 16px;
-                border-radius: 6px;
-                cursor: pointer;
-                font-size: 12px;
-                font-weight: 600;
-            }
-            .daily-stats {
-                background: #e3f2fd;
-                padding: 12px;
-                border-radius: 8px;
-                margin-top: 15px;
-                border: 1px solid #bbdefb;
-            }
-            .daily-stats-title {
-                font-size: 13px;
-                font-weight: 600;
-                color: #1565c0;
-                margin-bottom: 8px;
-                display: flex;
-                align-items: center;
-                gap: 6px;
-            }
-            .daily-stats-grid {
-                display: grid;
-                grid-template-columns: 1fr 1fr;
-                gap: 8px;
-            }
-            .daily-stat {
-                background: rgba(255, 255, 255, 0.7);
-                padding: 8px;
-                border-radius: 6px;
-                text-align: center;
-            }
-            .daily-stat-value {
-                font-size: 14px;
-                font-weight: 700;
-                color: #1976d2;
-            }
-            .daily-stat-label {
-                font-size: 10px;
-                color: #546e7a;
-            }
-            .notification {
-                position: fixed;
-                top: 50%;
-                left: 50%;
-                transform: translate(-50%, -50%);
-                background: rgba(0, 0, 0, 0.9);
-                color: white;
-                padding: 12px 20px;
-                border-radius: 8px;
-                z-index: 1000;
-                font-size: 14px;
-                display: none;
-                backdrop-filter: blur(10px);
-            }
-            .empty-state {
-                text-align: center;
-                padding: 30px 20px;
-                color: #7f8c8d;
-            }
-            .empty-state-icon {
-                font-size: 40px;
-                margin-bottom: 10px;
-                opacity: 0.5;
-            }
-        </style>
-    </head>
-    <body>
-        <div class="notification" id="copyNotification">✅ Ссылка скопирована в буфер</div>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Мониторинг лотов Tele2</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f5f6fa;
+            color: #333;
+            line-height: 1.4;
+        }
+        .app-container {
+            max-width: 100%;
+            padding: 12px;
+        }
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px;
+            border-radius: 12px;
+            margin-bottom: 15px;
+            text-align: center;
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+        }
+        .header h1 {
+            font-size: 18px;
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+        .controls {
+            display: flex;
+            gap: 8px;
+            justify-content: center;
+            margin-top: 10px;
+        }
+        .btn {
+            background: rgba(255, 255, 255, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            color: white;
+            padding: 6px 12px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 12px;
+            backdrop-filter: blur(10px);
+        }
+        .tabs {
+            display: flex;
+            background: white;
+            border-radius: 12px;
+            padding: 4px;
+            margin-bottom: 15px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        .tab {
+            flex: 1;
+            padding: 10px;
+            text-align: center;
+            cursor: pointer;
+            border: none;
+            background: transparent;
+            font-weight: 500;
+            font-size: 13px;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+        }
+        .tab.active {
+            background: #667eea;
+            color: white;
+            box-shadow: 0 2px 6px rgba(102, 126, 234, 0.3);
+        }
+        .content {
+            background: white;
+            border-radius: 12px;
+            padding: 15px;
+            margin-bottom: 15px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        .tab-content {
+            display: none;
+        }
+        .tab-content.active {
+            display: block;
+        }
+        .section-title {
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 12px;
+            color: #2c3e50;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .table-container {
+            overflow-x: auto;
+            margin: 0 -15px;
+            padding: 0 15px;
+        }
+        .table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 12px;
+            min-width: 700px;
+        }
+        .table th {
+            background: #f8f9fa;
+            color: #667eea;
+            padding: 10px 6px;
+            text-align: left;
+            font-weight: 600;
+            border-bottom: 2px solid #e9ecef;
+            white-space: nowrap;
+        }
+        .table td {
+            padding: 8px 6px;
+            border-bottom: 1px solid #e9ecef;
+            white-space: nowrap;
+        }
+        .table tr:last-child td {
+            border-bottom: none;
+        }
+        .table tr:hover {
+            background: #f8f9fa;
+        }
+        .status-active {
+            color: #27ae60;
+            font-weight: 600;
+            font-size: 11px;
+        }
+        .status-bought {
+            color: #e74c3c;
+            font-weight: 600;
+            font-size: 11px;
+        }
+        .id-copy {
+            color: #667eea;
+            cursor: pointer;
+            font-weight: 600;
+            padding: 2px 4px;
+            border-radius: 4px;
+            transition: background 0.2s;
+        }
+        .id-copy:hover {
+            background: #f0f3ff;
+        }
+        .stats-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        .stat-card {
+            background: #f8f9fa;
+            padding: 12px;
+            border-radius: 8px;
+            text-align: center;
+            border-left: 4px solid #667eea;
+        }
+        .stat-value {
+            font-size: 16px;
+            font-weight: 700;
+            color: #2c3e50;
+            margin-bottom: 2px;
+        }
+        .stat-label {
+            font-size: 11px;
+            color: #7f8c8d;
+        }
+        .profit-section {
+            background: linear-gradient(135deg, #e8f5e8, #d4edda);
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 15px;
+            border: 1px solid #c3e6cb;
+        }
+        .profit-title {
+            font-size: 13px;
+            font-weight: 600;
+            color: #155724;
+            margin-bottom: 8px;
+            text-align: center;
+        }
+        .profit-value {
+            font-size: 20px;
+            font-weight: 700;
+            color: #155724;
+            text-align: center;
+            margin: 8px 0;
+        }
+        .profit-formula {
+            font-size: 11px;
+            color: #155724;
+            text-align: center;
+            opacity: 0.8;
+        }
+        .redemption-input-section {
+            background: #fff3cd;
+            padding: 12px;
+            border-radius: 8px;
+            margin: 15px 0;
+            border: 1px solid #ffeaa7;
+        }
+        .input-group {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+        .redemption-input {
+            flex: 1;
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 14px;
+            background: white;
+        }
+        .save-btn {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        .daily-stats {
+            background: #e3f2fd;
+            padding: 12px;
+            border-radius: 8px;
+            margin-top: 15px;
+            border: 1px solid #bbdefb;
+        }
+        .daily-stats-title {
+            font-size: 13px;
+            font-weight: 600;
+            color: #1565c0;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .daily-stats-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+        }
+        .daily-stat {
+            background: rgba(255, 255, 255, 0.7);
+            padding: 8px;
+            border-radius: 6px;
+            text-align: center;
+        }
+        .daily-stat-value {
+            font-size: 14px;
+            font-weight: 700;
+            color: #1976d2;
+        }
+        .daily-stat-label {
+            font-size: 10px;
+            color: #546e7a;
+        }
+        .notification {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.9);
+            color: white;
+            padding: 12px 20px;
+            border-radius: 8px;
+            z-index: 1000;
+            font-size: 14px;
+            display: none;
+            backdrop-filter: blur(10px);
+        }
+        .empty-state {
+            text-align: center;
+            padding: 30px 20px;
+            color: #7f8c8d;
+        }
+        .empty-state-icon {
+            font-size: 40px;
+            margin-bottom: 10px;
+            opacity: 0.5;
+        }
+        .loading-spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-right: 8px;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="notification" id="copyNotification">✅ Ссылка скопирована в буфер</div>
+    
+    <div class="app-container">
+        <div class="header">
+            <h1>📊 Мониторинг лотов Tele2</h1>
+            <div class="controls">
+                <button class="btn" onclick="loadRealData()">🔄 Обновить данные</button>
+                <button class="btn" onclick="showTab('stats')">📈 Статистика</button>
+            </div>
+        </div>
         
-        <div class="app-container">
-            <div class="header">
-                <h1>📊 Мониторинг лотов Tele2</h1>
-                <div class="controls">
-                    <button class="btn" onclick="loadData()">🔄 Обновить</button>
-                    <button class="btn" onclick="showTab('stats')">📈 Статистика</button>
-                </div>
-            </div>
-            
-            <div class="tabs">
-                <button class="tab active" onclick="showTab('active')">Активные</button>
-                <button class="tab" onclick="showTab('bought')">История</button>
-                <button class="tab" onclick="showTab('stats')">Отчет</button>
-            </div>
-            
-            <div class="content">
-                <!-- Вкладка Активные -->
-                <div id="active-tab" class="tab-content active">
-                    <div class="section-title">🟢 Активные лоты</div>
-                    <div class="table-container">
-                        <div id="active-table-container">
-                            <div class="empty-state">
-                                <div class="empty-state-icon">📋</div>
-                                <div>Нет активных лотов</div>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="daily-stats">
-                        <div class="daily-stats-title">📊 Сегодняшняя статистика</div>
-                        <div class="daily-stats-grid">
-                            <div class="daily-stat">
-                                <div class="daily-stat-value" id="today-active-count">0</div>
-                                <div class="daily-stat-label">Активных лотов</div>
-                            </div>
-                            <div class="daily-stat">
-                                <div class="daily-stat-value" id="today-active-sum">0 руб</div>
-                                <div class="daily-stat-label">Сумма активных</div>
-                            </div>
-                            <div class="daily-stat">
-                                <div class="daily-stat-value" id="today-bought-count">0</div>
-                                <div class="daily-stat-label">Куплено сегодня</div>
-                            </div>
-                            <div class="daily-stat">
-                                <div class="daily-stat-value" id="today-bought-sum">0 руб</div>
-                                <div class="daily-stat-label">Сумма купленных</div>
-                            </div>
+        <div class="tabs">
+            <button class="tab active" onclick="showTab('active')">Активные</button>
+            <button class="tab" onclick="showTab('bought')">История</button>
+            <button class="tab" onclick="showTab('stats')">Отчет</button>
+        </div>
+        
+        <div class="content">
+            <!-- Вкладка Активные -->
+            <div id="active-tab" class="tab-content active">
+                <div class="section-title">🟢 Активные лоты</div>
+                <div class="table-container">
+                    <div id="active-table-container">
+                        <div class="empty-state">
+                            <div class="empty-state-icon">📋</div>
+                            <div>Загрузка данных...</div>
                         </div>
                     </div>
                 </div>
                 
-                <!-- Вкладка Купленные -->
-                <div id="bought-tab" class="tab-content">
-                    <div class="section-title">🔴 История покупок</div>
-                    <div class="table-container">
-                        <div id="bought-table-container">
-                            <div class="empty-state">
-                                <div class="empty-state-icon">🕒</div>
-                                <div>Нет истории покупок</div>
-                            </div>
+                <div class="daily-stats">
+                    <div class="daily-stats-title">📊 Сегодняшняя статистика</div>
+                    <div class="daily-stats-grid">
+                        <div class="daily-stat">
+                            <div class="daily-stat-value" id="today-active-count">0</div>
+                            <div class="daily-stat-label">Активных лотов</div>
+                        </div>
+                        <div class="daily-stat">
+                            <div class="daily-stat-value" id="today-active-sum">0 руб</div>
+                            <div class="daily-stat-label">Сумма активных</div>
+                        </div>
+                        <div class="daily-stat">
+                            <div class="daily-stat-value" id="today-bought-count">0</div>
+                            <div class="daily-stat-label">Куплено сегодня</div>
+                        </div>
+                        <div class="daily-stat">
+                            <div class="daily-stat-value" id="today-bought-sum">0 руб</div>
+                            <div class="daily-stat-label">Сумма купленных</div>
                         </div>
                     </div>
                 </div>
+            </div>
+            
+            <!-- Вкладка Купленные -->
+            <div id="bought-tab" class="tab-content">
+                <div class="section-title">🔴 История покупок</div>
+                <div class="table-container">
+                    <div id="bought-table-container">
+                        <div class="empty-state">
+                            <div class="empty-state-icon">🕒</div>
+                            <div>Загрузка данных...</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Вкладка Статистика -->
+            <div id="stats-tab" class="tab-content">
+                <div class="section-title">📈 Финансовый отчет</div>
                 
-                <!-- Вкладка Статистика -->
-                <div id="stats-tab" class="tab-content">
-                    <div class="section-title">📈 Финансовый отчет</div>
-                    
-                    <div class="stats-grid">
-                        <div class="stat-card">
-                            <div class="stat-value" id="total-active-count">0</div>
-                            <div class="stat-label">Всего активных</div>
-                        </div>
-                        <div class="stat-card">
-                            <div class="stat-value" id="total-active-sum">0 руб</div>
-                            <div class="stat-label">Сумма активных</div>
-                        </div>
-                        <div class="stat-card">
-                            <div class="stat-value" id="total-bought-count">0</div>
-                            <div class="stat-label">Всего куплено</div>
-                        </div>
-                        <div class="stat-card">
-                            <div class="stat-value" id="total-bought-sum">0 руб</div>
-                            <div class="stat-label">Сумма купленных</div>
-                        </div>
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-value" id="total-active-count">0</div>
+                        <div class="stat-label">Всего активных</div>
                     </div>
-                    
-                    <div class="redemption-input-section">
-                        <div style="font-size: 12px; color: #856404; margin-bottom: 8px; font-weight: 600;">
-                            💰 Процент выкупа для расчета прибыли
-                        </div>
-                        <div class="input-group">
-                            <input type="number" id="redemption-percent" class="redemption-input" 
-                                   min="0" max="100" value="0" placeholder="Введите % выкупа">
-                            <button class="save-btn" onclick="saveRedemptionRate()">Сохранить</button>
-                        </div>
-                        <div style="font-size: 10px; color: #856404; margin-top: 6px;">
-                            Прибыль = (Сумма купленных × % выкупа) / 100
-                        </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="total-active-sum">0 руб</div>
+                        <div class="stat-label">Сумма активных</div>
                     </div>
-                    
-                    <div class="profit-section">
-                        <div class="profit-title">🎯 Расчетная прибыль</div>
-                        <div class="profit-value" id="profit-amount">0 руб</div>
-                        <div class="profit-formula" id="profit-formula">
-                            На основе текущего процента выкупа
-                        </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="total-bought-count">0</div>
+                        <div class="stat-label">Всего куплено</div>
                     </div>
-                    
-                    <div class="daily-stats">
-                        <div class="daily-stats-title">📅 Операции за сегодня</div>
-                        <div class="daily-stats-grid">
-                            <div class="daily-stat">
-                                <div class="daily-stat-value" id="stats-today-active-count">0</div>
-                                <div class="daily-stat-label">Активных</div>
-                            </div>
-                            <div class="daily-stat">
-                                <div class="daily-stat-value" id="stats-today-active-sum">0 руб</div>
-                                <div class="daily-stat-label">Сумма активных</div>
-                            </div>
-                            <div class="daily-stat">
-                                <div class="daily-stat-value" id="stats-today-bought-count">0</div>
-                                <div class="daily-stat-label">Куплено</div>
-                            </div>
-                            <div class="daily-stat">
-                                <div class="daily-stat-value" id="stats-today-bought-sum">0 руб</div>
-                                <div class="daily-stat-label">Сумма купленных</div>
-                            </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="total-bought-sum">0 руб</div>
+                        <div class="stat-label">Сумма купленных</div>
+                    </div>
+                </div>
+                
+                <div class="redemption-input-section">
+                    <div style="font-size: 12px; color: #856404; margin-bottom: 8px; font-weight: 600;">
+                        💰 Процент выкупа для расчета прибыли
+                    </div>
+                    <div class="input-group">
+                        <input type="number" id="redemption-percent" class="redemption-input" 
+                               min="0" max="100" value="0" placeholder="Введите % выкупа">
+                        <button class="save-btn" onclick="saveRedemptionRate()">Сохранить</button>
+                    </div>
+                    <div style="font-size: 10px; color: #856404; margin-top: 6px;">
+                        Прибыль = (Сумма купленных × % выкупа) / 100
+                    </div>
+                </div>
+                
+                <div class="profit-section">
+                    <div class="profit-title">🎯 Расчетная прибыль</div>
+                    <div class="profit-value" id="profit-amount">0 руб</div>
+                    <div class="profit-formula" id="profit-formula">
+                        На основе текущего процента выкупа
+                    </div>
+                </div>
+                
+                <div class="daily-stats">
+                    <div class="daily-stats-title">📅 Операции за сегодня</div>
+                    <div class="daily-stats-grid">
+                        <div class="daily-stat">
+                            <div class="daily-stat-value" id="stats-today-active-count">0</div>
+                            <div class="daily-stat-label">Активных</div>
+                        </div>
+                        <div class="daily-stat">
+                            <div class="daily-stat-value" id="stats-today-active-sum">0 руб</div>
+                            <div class="daily-stat-label">Сумма активных</div>
+                        </div>
+                        <div class="daily-stat">
+                            <div class="daily-stat-value" id="stats-today-bought-count">0</div>
+                            <div class="daily-stat-label">Куплено</div>
+                        </div>
+                        <div class="daily-stat">
+                            <div class="daily-stat-value" id="stats-today-bought-sum">0 руб</div>
+                            <div class="daily-stat-label">Сумма купленных</div>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
+    </div>
 
-        <script>
-            let appData = null;
-            let currentRedemptionRate = 0;
+    <script>
+        let appData = null;
+        let currentRedemptionRate = 0;
+        
+        function showTab(tabName) {
+            // Скрыть все вкладки
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
             
-            function showTab(tabName) {
-                // Скрыть все вкладки
-                document.querySelectorAll('.tab-content').forEach(tab => {
-                    tab.classList.remove('active');
-                });
+            // Убрать активный класс со всех кнопок
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            // Показать выбранную вкладку
+            document.getElementById(tabName + '-tab').classList.add('active');
+            
+            // Добавить активный класс к выбранной кнопке
+            event.target.classList.add('active');
+            
+            // Если данные загружены, обновить отображение
+            if (appData) {
+                renderTabData(tabName);
+            }
+        }
+        
+        function renderTabData(tabName) {
+            switch(tabName) {
+                case 'active':
+                    renderTable('active-table-container', appData.active_lots);
+                    updateTodayStats();
+                    break;
+                case 'bought':
+                    renderTable('bought-table-container', appData.bought_lots);
+                    break;
+                case 'stats':
+                    updateStats();
+                    updateTodayStats();
+                    break;
+            }
+        }
+        
+        function updateStats() {
+            if (!appData) return;
+            
+            document.getElementById('total-active-count').textContent = appData.stats.active_count;
+            document.getElementById('total-active-sum').textContent = appData.stats.active_sum + ' руб';
+            document.getElementById('total-bought-count').textContent = appData.stats.bought_count;
+            document.getElementById('total-bought-sum').textContent = appData.stats.bought_sum + ' руб';
+            
+            calculateProfit();
+        }
+        
+        function updateTodayStats() {
+            if (!appData) return;
+            
+            const today = new Date().toISOString().split('T')[0];
+            const todayBoughtLots = appData.bought_lots.filter(lot => lot.purchase_date === today);
+            const todayBoughtCount = todayBoughtLots.length;
+            const todayBoughtSum = todayBoughtLots.reduce((sum, lot) => sum + (lot.amount || 0), 0);
+            
+            // Обновляем на вкладке Активные
+            document.getElementById('today-active-count').textContent = appData.stats.active_count;
+            document.getElementById('today-active-sum').textContent = appData.stats.active_sum + ' руб';
+            document.getElementById('today-bought-count').textContent = todayBoughtCount;
+            document.getElementById('today-bought-sum').textContent = todayBoughtSum + ' руб';
+            
+            // Обновляем на вкладке Статистика
+            document.getElementById('stats-today-active-count').textContent = appData.stats.active_count;
+            document.getElementById('stats-today-active-sum').textContent = appData.stats.active_sum + ' руб';
+            document.getElementById('stats-today-bought-count').textContent = todayBoughtCount;
+            document.getElementById('stats-today-bought-sum').textContent = todayBoughtSum + ' руб';
+        }
+        
+        function calculateProfit() {
+            if (!appData) return;
+            
+            const redemptionRate = currentRedemptionRate;
+            const boughtSum = appData.stats.bought_sum;
+            const profit = (boughtSum * redemptionRate) / 100;
+            
+            document.getElementById('profit-amount').textContent = profit.toFixed(2) + ' руб';
+            document.getElementById('profit-formula').textContent = 
+                `На основе ${redemptionRate}% от ${boughtSum} руб`;
+        }
+        
+        function saveRedemptionRate() {
+            const input = document.getElementById('redemption-percent');
+            const rate = parseFloat(input.value);
+            
+            if (!isNaN(rate) && rate >= 0 && rate <= 100) {
+                currentRedemptionRate = rate;
+                localStorage.setItem('redemption_rate', rate.toString());
+                calculateProfit();
                 
-                // Убрать активный класс со всех кнопок
-                document.querySelectorAll('.tab').forEach(tab => {
-                    tab.classList.remove('active');
-                });
-                
-                // Показать выбранную вкладку
-                document.getElementById(tabName + '-tab').classList.add('active');
-                
-                // Добавить активный класс к выбранной кнопке
-                event.target.classList.add('active');
-                
-                // Если данные загружены, обновить отображение
-                if (appData) {
-                    renderTabData(tabName);
-                }
+                // Показываем уведомление
+                showNotification('Процент выкупа сохранен: ' + rate + '%');
+            } else {
+                showNotification('Введите корректный процент (0-100)');
+            }
+        }
+        
+        function copyToClipboard(text) {
+            navigator.clipboard.writeText(text).then(() => {
+                showNotification('Ссылка скопирована в буфер');
+            }).catch(() => {
+                // Fallback для старых браузеров
+                const textArea = document.createElement('textarea');
+                textArea.value = text;
+                document.body.appendChild(textArea);
+                textArea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textArea);
+                showNotification('Ссылка скопирована в буфер');
+            });
+        }
+        
+        function showNotification(message) {
+            const notification = document.getElementById('copyNotification');
+            notification.textContent = message;
+            notification.style.display = 'block';
+            setTimeout(() => {
+                notification.style.display = 'none';
+            }, 2000);
+        }
+        
+        function renderTable(containerId, lots) {
+            const container = document.getElementById(containerId);
+            
+            if (!lots || lots.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">${containerId.includes('active') ? '📋' : '🕒'}</div>
+                        <div>${containerId.includes('active') ? 'Нет активных лотов' : 'Нет истории покупок'}</div>
+                    </div>
+                `;
+                return;
             }
             
-            function renderTabData(tabName) {
-                switch(tabName) {
-                    case 'active':
-                        renderTable('active-table-container', appData.active_lots);
-                        updateTodayStats();
-                        break;
-                    case 'bought':
-                        renderTable('bought-table-container', appData.bought_lots);
-                        break;
-                    case 'stats':
+            let html = '<table class="table">';
+            html += '<tr><th>ID</th><th>Статус</th><th>Номинал</th><th>Цена</th><th>Сгорание</th><th>Изменен</th><th>Продавец</th></tr>';
+            
+            lots.forEach(lot => {
+                const statusClass = lot.original_status === 'active' ? 'status-active' : 'status-bought';
+                const fullUrl = lot.url || `https://tele2.ru/exchange/lots/${lot.full_id || lot.id}`;
+                
+                html += `
+                    <tr>
+                        <td><span class="id-copy" onclick="copyToClipboard('${fullUrl}')" title="Нажмите чтобы скопировать ссылку">${lot.id}</span></td>
+                        <td class="${statusClass}">${lot.status}</td>
+                        <td>${lot.nominal}</td>
+                        <td>${lot.price}</td>
+                        <td>${lot.expiration}</td>
+                        <td>${lot.changed}</td>
+                        <td>${lot.name}</td>
+                    </tr>
+                `;
+            });
+            
+            html += '</table>';
+            container.innerHTML = html;
+        }
+
+        function loadRealData() {
+            // Показываем индикатор загрузки
+            document.querySelectorAll('.empty-state').forEach(container => {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div class="loading-spinner"></div>
+                        <div>Загрузка данных...</div>
+                    </div>
+                `;
+            });
+
+            // Пытаемся загрузить данные из web_app_data.json
+            fetch('web_app_data.json?' + new Date().getTime()) // Добавляем timestamp для избежания кэширования
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    appData = data;
+                    renderTabData('active');
+                    updateStats();
+                    updateTodayStats();
+                    document.getElementById('update-time').textContent = new Date().toLocaleString('ru-RU');
+                    
+                    // Сохраняем в localStorage для оффлайн работы
+                    localStorage.setItem('tele2_lots_data', JSON.stringify(data));
+                    showNotification('✅ Данные успешно загружены');
+                })
+                .catch(error => {
+                    console.error('Ошибка загрузки данных:', error);
+                    
+                    // Пытаемся загрузить из localStorage как fallback
+                    const savedData = localStorage.getItem('tele2_lots_data');
+                    if (savedData) {
+                        appData = JSON.parse(savedData);
+                        renderTabData('active');
                         updateStats();
                         updateTodayStats();
-                        break;
-                }
-            }
-            
-            function updateStats() {
-                if (!appData) return;
-                
-                document.getElementById('total-active-count').textContent = appData.stats.active_count;
-                document.getElementById('total-active-sum').textContent = appData.stats.active_sum + ' руб';
-                document.getElementById('total-bought-count').textContent = appData.stats.bought_count;
-                document.getElementById('total-bought-sum').textContent = appData.stats.bought_sum + ' руб';
-                
-                calculateProfit();
-            }
-            
-            function updateTodayStats() {
-                if (!appData) return;
-                
-                const today = new Date().toISOString().split('T')[0];
-                const todayBoughtLots = appData.bought_lots.filter(lot => lot.purchase_date === today);
-                const todayBoughtCount = todayBoughtLots.length;
-                const todayBoughtSum = todayBoughtLots.reduce((sum, lot) => sum + (lot.amount || 0), 0);
-                
-                // Обновляем на вкладке Активные
-                document.getElementById('today-active-count').textContent = appData.stats.active_count;
-                document.getElementById('today-active-sum').textContent = appData.stats.active_sum + ' руб';
-                document.getElementById('today-bought-count').textContent = todayBoughtCount;
-                document.getElementById('today-bought-sum').textContent = todayBoughtSum + ' руб';
-                
-                // Обновляем на вкладке Статистика
-                document.getElementById('stats-today-active-count').textContent = appData.stats.active_count;
-                document.getElementById('stats-today-active-sum').textContent = appData.stats.active_sum + ' руб';
-                document.getElementById('stats-today-bought-count').textContent = todayBoughtCount;
-                document.getElementById('stats-today-bought-sum').textContent = todayBoughtSum + ' руб';
-            }
-            
-            function calculateProfit() {
-                if (!appData) return;
-                
-                const redemptionRate = currentRedemptionRate;
-                const boughtSum = appData.stats.bought_sum;
-                const profit = (boughtSum * redemptionRate) / 100;
-                
-                document.getElementById('profit-amount').textContent = profit.toFixed(2) + ' руб';
-                document.getElementById('profit-formula').textContent = 
-                    `На основе ${redemptionRate}% от ${boughtSum} руб`;
-            }
-            
-            function saveRedemptionRate() {
-                const input = document.getElementById('redemption-percent');
-                const rate = parseFloat(input.value);
-                
-                if (!isNaN(rate) && rate >= 0 && rate <= 100) {
-                    currentRedemptionRate = rate;
-                    localStorage.setItem('redemption_rate', rate.toString());
-                    calculateProfit();
-                    
-                    // Показываем уведомление
-                    showNotification('Процент выкупа сохранен: ' + rate + '%');
-                } else {
-                    showNotification('Введите корректный процент (0-100)');
-                }
-            }
-            
-            function copyToClipboard(text) {
-                navigator.clipboard.writeText(text).then(() => {
-                    showNotification('Ссылка скопирована в буфер');
-                }).catch(() => {
-                    // Fallback для старых браузеров
-                    const textArea = document.createElement('textarea');
-                    textArea.value = text;
-                    document.body.appendChild(textArea);
-                    textArea.select();
-                    document.execCommand('copy');
-                    document.body.removeChild(textArea);
-                    showNotification('Ссылка скопирована в буфер');
+                        showNotification('⚠️ Используются локальные данные');
+                    } else {
+                        // Если данных нет вообще
+                        document.querySelectorAll('.empty-state').forEach(container => {
+                            container.innerHTML = `
+                                <div class="empty-state">
+                                    <div class="empty-state-icon">❌</div>
+                                    <div>Не удалось загрузить данные</div>
+                                    <div style="font-size: 11px; margin-top: 5px;">Проверьте подключение к интернету</div>
+                                </div>
+                            `;
+                        });
+                        showNotification('❌ Ошибка загрузки данных');
+                    }
                 });
+        }
+        
+        function loadData() {
+            // Загружаем сохраненный процент выкупа
+            const savedRate = localStorage.getItem('redemption_rate');
+            if (savedRate) {
+                currentRedemptionRate = parseFloat(savedRate);
+                document.getElementById('redemption-percent').value = currentRedemptionRate;
             }
             
-            function showNotification(message) {
-                const notification = document.getElementById('copyNotification');
-                notification.textContent = message;
-                notification.style.display = 'block';
-                setTimeout(() => {
-                    notification.style.display = 'none';
-                }, 2000);
-            }
+            // Загружаем реальные данные
+            loadRealData();
+        }
+        
+        // Инициализация при загрузке
+        document.addEventListener('DOMContentLoaded', function() {
+            Telegram.WebApp.ready();
+            Telegram.WebApp.expand();
             
-            function renderTable(containerId, lots) {
-                const container = document.getElementById(containerId);
-                
-                if (!lots || lots.length === 0) {
-                    container.innerHTML = `
-                        <div class="empty-state">
-                            <div class="empty-state-icon">${containerId.includes('active') ? '📋' : '🕒'}</div>
-                            <div>${containerId.includes('active') ? 'Нет активных лотов' : 'Нет истории покупок'}</div>
-                        </div>
-                    `;
-                    return;
-                }
-                
-                let html = '<table class="table">';
-                html += '<tr><th>ID</th><th>Статус</th><th>Номинал</th><th>Цена</th><th>Сгорание</th><th>Изменен</th><th>Продавец</th></tr>';
-                
-                lots.forEach(lot => {
-                    const statusClass = lot.original_status === 'active' ? 'status-active' : 'status-bought';
-                    const fullUrl = lot.url || `https://t2.ru/stock-exchange/internet?lotId=${lot.full_id || lot.id}`;
-                    
-                    html += `
-                        <tr>
-                            <td><span class="id-copy" onclick="copyToClipboard('${fullUrl}')" title="Нажмите чтобы скопировать ссылку">${lot.id}</span></td>
-                            <td class="${statusClass}">${lot.status}</td>
-                            <td>${lot.nominal}</td>
-                            <td>${lot.price}</td>
-                            <td>${lot.expiration}</td>
-                            <td>${lot.changed}</td>
-                            <td>${lot.name}</td>
-                        </tr>
-                    `;
-                });
-                
-                html += '</table>';
-                container.innerHTML = html;
-            }
+            // Загружаем данные
+            loadData();
             
-            function loadData() {
-                // Загружаем сохраненный процент выкупа
-                const savedRate = localStorage.getItem('redemption_rate');
-                if (savedRate) {
-                    currentRedemptionRate = parseFloat(savedRate);
-                    document.getElementById('redemption-percent').value = currentRedemptionRate;
-                }
-                
-                // В реальном приложении здесь будет запрос к API бота
-                // Для демо используем mock данные
-                const savedData = localStorage.getItem('tele2_lots_data');
-                if (savedData) {
-                    appData = JSON.parse(savedData);
-                    renderTabData('active');
-                    updateStats();
-                } else {
-                    // Mock данные для демонстрации
-                    const today = new Date().toISOString().split('T')[0];
-                    appData = {
-                        active_lots: [
-                            {
-                                id: "-551675777",
-                                full_id: "-5516757779643926097",
-                                status: "Активный",
-                                nominal: "200 min",
-                                price: "400 руб",
-                                expiration: "13.03.2025",
-                                changed: "11.03.2025",
-                                name: "Светлана",
-                                original_status: "active",
-                                url: "https://t2.ru/stock-exchange/internet?lotId=-5516757779643926097",
-                                amount: 400
-                            },
-                            {
-                                id: "833239682",
-                                full_id: "8332396822483649413",
-                                status: "Активный", 
-                                nominal: "1 gb",
-                                price: "50 руб",
-                                expiration: "13.03.2025",
-                                changed: "11.03.2025",
-                                name: "Светлана",
-                                original_status: "active",
-                                url: "https://t2.ru/stock-exchange/internet?lotId=8332396822483649413",
-                                amount: 50
-                            }
-                        ],
-                        bought_lots: [
-                            {
-                                id: "-567080568",
-                                full_id: "-5670805689834724892",
-                                status: "Куплен",
-                                nominal: "200 min", 
-                                price: "400 руб",
-                                expiration: "15.03.2025",
-                                changed: "15.03.2025",
-                                name: "Светлана",
-                                original_status: "bought",
-                                url: "https://t2.ru/stock-exchange/internet?lotId=-5670805689834724892",
-                                amount: 400,
-                                purchase_date: today
-                            },
-                            {
-                                id: "-130588080",
-                                full_id: "-130588080402547868",
-                                status: "Куплен",
-                                nominal: "250 min", 
-                                price: "500 руб",
-                                expiration: "20.03.2025",
-                                changed: "19.03.2025",
-                                name: "Алексей",
-                                original_status: "bought",
-                                url: "https://t2.ru/stock-exchange/internet?lotId=-130588080402547868",
-                                amount: 500,
-                                purchase_date: "2024-01-15" // Вчерашняя дата для примера
-                            }
-                        ],
-                        stats: {
-                            active_count: 2,
-                            active_sum: 450,
-                            bought_count: 2,
-                            bought_sum: 900
-                        }
-                    };
-                    
-                    renderTabData('active');
-                    updateStats();
-                    
-                    // Сохраняем в localStorage для демо
-                    localStorage.setItem('tele2_lots_data', JSON.stringify(appData));
-                }
-            }
-            
-            // Инициализация при загрузке
-            document.addEventListener('DOMContentLoaded', function() {
-                Telegram.WebApp.ready();
-                Telegram.WebApp.expand();
-                
-                // Загружаем данные
-                loadData();
-            });
-        </script>
-    </body>
-    </html>
+            // Автоматическое обновление каждые 2 минуты
+            setInterval(loadRealData, 120000);
+        });
+    </script>
+</body>
+</html>
