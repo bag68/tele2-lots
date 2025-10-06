@@ -9,12 +9,16 @@ def create_web_app_html():
         <title>Мониторинг лотов Tele2</title>
         <script src="https://telegram.org/js/telegram-web-app.js"></script>
         <style>
+            * {
+                box-sizing: border-box;
+            }
             body {
                 font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
                 margin: 0;
-                padding: 20px;
+                padding: 15px;
                 background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
                 min-height: 100vh;
+                font-size: 13px;
             }
             .container {
                 max-width: 100%;
@@ -23,23 +27,28 @@ def create_web_app_html():
             .header {
                 text-align: center;
                 color: white;
-                margin-bottom: 20px;
+                margin-bottom: 15px;
+            }
+            .header h1 {
+                margin: 0 0 10px 0;
+                font-size: 18px;
             }
             .tabs {
                 display: flex;
-                margin-bottom: 20px;
+                margin-bottom: 15px;
                 background: white;
-                border-radius: 10px;
+                border-radius: 8px;
                 overflow: hidden;
             }
             .tab {
                 flex: 1;
-                padding: 15px;
+                padding: 12px 8px;
                 text-align: center;
                 cursor: pointer;
                 border: none;
                 background: transparent;
                 font-weight: bold;
+                font-size: 12px;
             }
             .tab.active {
                 background: #667eea;
@@ -47,51 +56,51 @@ def create_web_app_html():
             }
             .content {
                 background: white;
-                border-radius: 15px;
-                padding: 20px;
+                border-radius: 12px;
+                padding: 15px;
                 box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+                margin-bottom: 15px;
             }
-            .stats {
+            .stats-grid {
                 display: grid;
                 grid-template-columns: 1fr 1fr;
-                gap: 10px;
-                margin-bottom: 20px;
+                gap: 8px;
+                margin-bottom: 15px;
             }
             .stat-card {
                 background: #f8f9fa;
-                padding: 15px;
-                border-radius: 10px;
+                padding: 12px;
+                border-radius: 8px;
                 text-align: center;
             }
             .stat-value {
-                font-size: 24px;
+                font-size: 16px;
                 font-weight: bold;
                 color: #667eea;
             }
             .stat-label {
-                font-size: 12px;
+                font-size: 10px;
                 color: #666;
-            }
-            .table-container {
-                overflow-x: auto;
+                margin-top: 4px;
             }
             .table {
                 width: 100%;
                 border-collapse: collapse;
-                margin-top: 15px;
-                min-width: 600px;
+                margin-top: 10px;
+                font-size: 11px;
             }
             .table th {
                 background: #667eea;
                 color: white;
-                padding: 12px;
+                padding: 8px 4px;
                 text-align: left;
-                position: sticky;
-                top: 0;
+                font-weight: 600;
+                white-space: nowrap;
             }
             .table td {
-                padding: 12px;
+                padding: 6px 4px;
                 border-bottom: 1px solid #eee;
+                white-space: nowrap;
             }
             .table tr:hover {
                 background: #f5f5f5;
@@ -106,14 +115,15 @@ def create_web_app_html():
             }
             .empty-state {
                 text-align: center;
-                padding: 40px;
+                padding: 30px;
                 color: #666;
+                font-size: 14px;
             }
             .last-update {
                 text-align: center;
                 color: white;
-                margin-top: 20px;
-                font-size: 12px;
+                margin-top: 10px;
+                font-size: 11px;
             }
             .loading {
                 text-align: center;
@@ -124,14 +134,56 @@ def create_web_app_html():
                 background: #667eea;
                 color: white;
                 border: none;
-                padding: 10px 20px;
+                padding: 8px 16px;
                 border-radius: 5px;
                 cursor: pointer;
+                margin: 5px 0;
+                font-size: 12px;
+            }
+            .id-copy {
+                color: #667eea;
+                cursor: pointer;
+                text-decoration: underline;
+                font-weight: bold;
+            }
+            .redemption-input {
+                width: 100%;
+                padding: 8px;
+                border: 1px solid #ddd;
+                border-radius: 5px;
                 margin: 10px 0;
+                font-size: 14px;
+            }
+            .profit-calc {
+                background: #e8f5e8;
+                padding: 10px;
+                border-radius: 8px;
+                margin-top: 10px;
+            }
+            .profit-value {
+                font-size: 18px;
+                font-weight: bold;
+                color: #28a745;
+                text-align: center;
+                margin: 5px 0;
+            }
+            .notification {
+                position: fixed;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                background: rgba(0,0,0,0.8);
+                color: white;
+                padding: 10px 20px;
+                border-radius: 5px;
+                z-index: 1000;
+                display: none;
             }
         </style>
     </head>
     <body>
+        <div class="notification" id="copyNotification">Ссылка скопирована!</div>
+        
         <div class="container">
             <div class="header">
                 <h1>📊 Мониторинг лотов Tele2</h1>
@@ -146,22 +198,23 @@ def create_web_app_html():
             
             <div class="content">
                 <div id="active-tab" class="tab-content">
-                    <h3>🟢 Активные лоты</h3>
+                    <h3 style="margin: 0 0 10px 0; font-size: 14px;">🟢 Активные лоты</h3>
                     <div id="active-table-container" class="loading">
                         Загрузка данных...
                     </div>
                 </div>
                 
                 <div id="bought-tab" class="tab-content" style="display: none;">
-                    <h3>🔴 Купленные лоты</h3>
+                    <h3 style="margin: 0 0 10px 0; font-size: 14px;">🔴 Купленные лоты</h3>
                     <div id="bought-table-container" class="loading">
                         Загрузка данных...
                     </div>
                 </div>
                 
                 <div id="stats-tab" class="tab-content" style="display: none;">
-                    <h3>📈 Статистика</h3>
-                    <div class="stats">
+                    <h3 style="margin: 0 0 10px 0; font-size: 14px;">📈 Статистика</h3>
+                    
+                    <div class="stats-grid">
                         <div class="stat-card">
                             <div class="stat-value" id="active-count">0</div>
                             <div class="stat-label">Активных лотов</div>
@@ -179,9 +232,24 @@ def create_web_app_html():
                             <div class="stat-label">Сумма купленных</div>
                         </div>
                     </div>
-                    <div class="stat-card" style="grid-column: 1 / -1; margin-top: 10px;">
+                    
+                    <div class="stat-card" style="margin-top: 8px;">
                         <div class="stat-value" id="total-sum">0 руб</div>
                         <div class="stat-label">Общая сумма всех лотов</div>
+                    </div>
+                    
+                    <div style="margin-top: 15px;">
+                        <label for="redemption-percent" style="font-size: 12px; color: #666;">Процент выкупа (%):</label>
+                        <input type="number" id="redemption-percent" class="redemption-input" 
+                               min="0" max="100" value="0" onchange="calculateProfit()">
+                    </div>
+                    
+                    <div class="profit-calc">
+                        <div style="text-align: center; font-size: 12px; color: #666;">Расчетная прибыль:</div>
+                        <div class="profit-value" id="profit-amount">0 руб</div>
+                        <div style="text-align: center; font-size: 10px; color: #666;">
+                            Прибыль = (Сумма купленных × % выкупа) / 100
+                        </div>
                     </div>
                 </div>
             </div>
@@ -239,6 +307,28 @@ def create_web_app_html():
                 document.getElementById('bought-count').textContent = appData.stats.bought_count;
                 document.getElementById('bought-sum').textContent = appData.stats.bought_sum + ' руб';
                 document.getElementById('total-sum').textContent = (appData.stats.active_sum + appData.stats.bought_sum) + ' руб';
+                
+                calculateProfit();
+            }
+            
+            function calculateProfit() {
+                if (!appData) return;
+                
+                const redemptionPercent = parseFloat(document.getElementById('redemption-percent').value) || 0;
+                const boughtSum = appData.stats.bought_sum;
+                const profit = (boughtSum * redemptionPercent) / 100;
+                
+                document.getElementById('profit-amount').textContent = profit.toFixed(2) + ' руб';
+            }
+            
+            function copyToClipboard(text) {
+                navigator.clipboard.writeText(text).then(() => {
+                    const notification = document.getElementById('copyNotification');
+                    notification.style.display = 'block';
+                    setTimeout(() => {
+                        notification.style.display = 'none';
+                    }, 2000);
+                });
             }
             
             function renderTable(containerId, lots) {
@@ -249,13 +339,16 @@ def create_web_app_html():
                     return;
                 }
                 
-                let html = '<div class="table-container"><table class="table"><tr><th>ID</th><th>Статус</th><th>Номинал</th><th>Цена</th><th>Сгорание</th><th>Изменен</th><th>Продавец</th></tr>';
+                let html = '<table class="table">';
+                html += '<tr><th>ID</th><th>Статус</th><th>Номинал</th><th>Цена</th><th>Сгорание</th><th>Изменен</th><th>Продавец</th></tr>';
                 
                 lots.forEach(lot => {
                     const statusClass = lot.original_status === 'active' ? 'status-active' : 'status-bought';
+                    const fullUrl = lot.url || `https://t2.ru/stock-exchange/internet?lotId=${lot.full_id || lot.id}`;
+                    
                     html += `
                         <tr>
-                            <td>${lot.id}</td>
+                            <td><span class="id-copy" onclick="copyToClipboard('${fullUrl}')" title="Нажмите чтобы скопировать ссылку">${lot.id}</span></td>
                             <td class="${statusClass}">${lot.status}</td>
                             <td>${lot.nominal}</td>
                             <td>${lot.price}</td>
@@ -266,13 +359,13 @@ def create_web_app_html():
                     `;
                 });
                 
-                html += '</table></div>';
+                html += '</table>';
                 container.innerHTML = html;
             }
             
             function loadData() {
                 // В реальном приложении здесь будет запрос к API бота
-                // Для демо используем localStorage или mock данные
+                // Для демо используем mock данные
                 
                 const savedData = localStorage.getItem('tele2_lots_data');
                 if (savedData) {
@@ -285,36 +378,42 @@ def create_web_app_html():
                     appData = {
                         active_lots: [
                             {
-                                id: "891856",
+                                id: "-551675777",
+                                full_id: "-5516757779643926097",
                                 status: "Активный",
                                 nominal: "200 min",
                                 price: "400 руб",
                                 expiration: "13.03.2025",
                                 changed: "11.03.2025",
                                 name: "Светлана",
-                                original_status: "active"
+                                original_status: "active",
+                                url: "https://t2.ru/stock-exchange/internet?lotId=-5516757779643926097"
                             },
                             {
-                                id: "894413",
+                                id: "833239682",
+                                full_id: "8332396822483649413",
                                 status: "Активный", 
                                 nominal: "1 gb",
                                 price: "50 руб",
                                 expiration: "13.03.2025",
                                 changed: "11.03.2025",
                                 name: "Светлана",
-                                original_status: "active"
+                                original_status: "active",
+                                url: "https://t2.ru/stock-exchange/internet?lotId=8332396822483649413"
                             }
                         ],
                         bought_lots: [
                             {
-                                id: "74892",
+                                id: "-567080568",
+                                full_id: "-5670805689834724892",
                                 status: "Куплен",
                                 nominal: "200 min", 
                                 price: "400 руб",
                                 expiration: "15.03.2025",
                                 changed: "15.03.2025",
                                 name: "Светлана",
-                                original_status: "bought"
+                                original_status: "bought",
+                                url: "https://t2.ru/stock-exchange/internet?lotId=-5670805689834724892"
                             }
                         ],
                         stats: {
@@ -328,6 +427,9 @@ def create_web_app_html():
                     renderTabData('active');
                     updateStats();
                     document.getElementById('update-time').textContent = new Date().toLocaleString('ru-RU');
+                    
+                    // Сохраняем в localStorage для демо
+                    localStorage.setItem('tele2_lots_data', JSON.stringify(appData));
                 }
             }
             
